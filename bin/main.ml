@@ -14,6 +14,10 @@ let practv s =
        (sactv s))
 ****)
 
+let g = Seq (Rep (Alt (Imp 'D', Imp 'E')), Imp 'F')
+
 let () =
   print_endline @@ string_of_re r;
-  print_endline @@ string_of_int @@ run r 7
+  print_endline @@ string_of_int @@ run r 7;
+  print_endline @@ string_of_re g;
+  print_endline @@ string_of_int @@ run2 g 30 42

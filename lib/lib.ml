@@ -39,6 +39,12 @@ let imps =
         match v with 2, a, n -> (2, a * n, n - 1) | _, _, _ -> raise f)
     |> add 'C' (fun v ->
         match v with 2, a, _ -> (1, a, 0) | _, _, _ -> raise f)
+    |> add 'D' (fun v ->
+        match v with 2, n, m -> (2, n - m, m) | _, _, _ -> raise f)
+    |> add 'E' (fun v ->
+        match v with 2, n, m -> (2, n, m - n) | _, _, _ -> raise f)
+    |> add 'F' (fun v ->
+        match v with 2, n, m -> (1, n, m) | _, _, _ -> raise f)
     |> add '_' (fun v -> v))
 
 let doms =
@@ -47,11 +53,17 @@ let doms =
     |> add 'A' (fun v -> match v with 1, _, _ -> true | _, _, _ -> false)
     |> add 'B' (fun v -> match v with 2, _, _ -> true | _, _, _ -> false)
     |> add 'C' (fun v -> match v with 2, _, 0 -> true | _, _, _ -> false)
+    |> add 'D' (fun v -> match v with 2, n, m -> n >= m | _, _, _ -> false)
+    |> add 'E' (fun v -> match v with 2, n, m -> m >= n | _, _, _ -> false)
+    |> add 'F' (fun v -> match v with 2, n, m -> n = m | _, _, _ -> false)
     |> add '$' (fun v -> match v with 0, 1, 2 -> true | _, _, _ -> false)
       (*TC?*)
     |> add '_' (fun _ -> true))
 
-let pris = CharMap.(empty |> add 'A' 0 |> add 'B' 1 |> add 'C' 0 |> add '_' 3)
+let pris =
+  CharMap.(
+    empty |> add 'A' 0 |> add 'B' 1 |> add 'C' 0 |> add 'D' 1 |> add 'E' 1
+    |> add 'F' 0 |> add '_' 6)
 
 let sactv s =
   let scmp x y =
@@ -71,3 +83,4 @@ and dalts s zs =
       else dalts s zs2
 
 let run s n = runx s (1, n, 0)
+let run2 s n m = runx s (2, n, m)
