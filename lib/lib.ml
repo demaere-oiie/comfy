@@ -2,7 +2,9 @@ type re = Eps | Imp of char | Alt of re * re | Seq of re * re | Rep of re
 
 let seq x y = match (x, y) with Eps, _ -> y | _, Eps -> x | _, _ -> Seq (x, y)
 
-let rec actv s =
+type branch = char * re
+
+let rec actv s : branch list =
   match s with
   | Eps -> [ ('_', Eps) ]
   | Imp f -> [ (f, Eps) ]
@@ -18,7 +20,7 @@ let rec actv s =
       let xs = List.map (fun v -> match v with i, k -> (i, seq k y)) zs in
       if List.mem ('_', Eps) zs then List.flatten [ xs; actv y ] else xs
 
-let rec string_of_re s =
+let rec string_of_re s : string =
   match s with
   | Eps -> "$"
   | Imp f -> Char.escaped f
@@ -62,33 +64,33 @@ let pris =
     empty |> add 'A' 0 |> add 'B' 1 |> add 'C' 0 |> add 'D' 1 |> add 'E' 1
     |> add 'F' 0 |> add '_' 6)
 
-let sactv s =
+let sactv s : branch list =
   let scmp x y =
     match x with
     | i, _ -> ( match y with j, _ -> CharMap.(find i pris - find j pris))
   in
   List.sort scmp (actv s)
 
-let funcall f s =
+let funcall f s : possibly_many =
   match (f, s) with
   | Id, _ -> s
   | Arity1 f1, One s1 -> f1 s1
   | Arity2 f2, Two s2 -> f2 s2
   | _, _ -> raise (Failure "fail")
 
-let prdcall f s =
+let prdcall f s : bool =
   match (f, s) with
   | Id, _ -> true
   | Arity1 f1, One s1 -> f1 s1
   | Arity2 f2, Two s2 -> f2 s2
   | _, _ -> false
 
-let rec runx r s =
+let rec runx r s : int =
   match r with
   | Eps -> ( match s with One n -> n | _ -> raise f)
   | _ -> dalts s (sactv r)
 
-and dalts s zs =
+and dalts s zs : int =
   match zs with
   | [] -> raise (Failure "not exhaustive")
   | (i, k) :: zs2 ->
