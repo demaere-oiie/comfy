@@ -1,11 +1,9 @@
 open Comfy.Lib
 
-let r = Seq (Imp 'A', Seq (Rep (Imp 'B'), Imp 'C'))
+let fac = Seq (Imp 'A', Seq (Rep (Imp 'B'), Imp 'C'))
+let gcd = Seq (Rep (Alt (Imp 'D', Imp 'E')), Imp 'F')
 
 (****
-let s = Seq (Rep (Seq (Imp 'A', Imp 'B')), Imp 'C')
-let t = Seq (Rep (Imp 'B'), Imp 'C')
-
 let practv s =
   print_endline "---";
   List.iter print_endline
@@ -14,10 +12,10 @@ let practv s =
        (sactv s))
 ****)
 
-let g = Seq (Rep (Alt (Imp 'D', Imp 'E')), Imp 'F')
-
 let () =
-  print_endline @@ string_of_re r;
-  print_endline @@ string_of_int @@ run r 7;
-  print_endline @@ string_of_re g;
-  print_endline @@ string_of_int @@ run2 g 30 42
+  print_endline @@ "fac = " ^ string_of_re fac;
+  print_string "fac 7 = ";
+  print_endline @@ string_of_int @@ run fac 7;
+  print_endline @@ "gcd = " ^ string_of_re gcd;
+  print_string "gcd 30 42 = ";
+  print_endline @@ string_of_int @@ run2 gcd 30 42
