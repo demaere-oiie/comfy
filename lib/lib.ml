@@ -30,35 +30,32 @@ module CharMap = Map.Make (Char)
 
 let f = Failure "fail"
 
+type possibly_many = One of int | Two of (int * int)
+type 'a arity = Id | Arity1 of (int -> 'a) | Arity2 of (int * int -> 'a)
+type fn = possibly_many arity
+type pd = bool arity
+
 let imps =
   CharMap.(
     empty
-    |> add 'A' (fun v ->
-        match v with 1, n, _ -> (2, 1, n) | _, _, _ -> raise f)
-    |> add 'B' (fun v ->
-        match v with 2, a, n -> (2, a * n, n - 1) | _, _, _ -> raise f)
-    |> add 'C' (fun v ->
-        match v with 2, a, _ -> (1, a, 0) | _, _, _ -> raise f)
-    |> add 'D' (fun v ->
-        match v with 2, n, m -> (2, n - m, m) | _, _, _ -> raise f)
-    |> add 'E' (fun v ->
-        match v with 2, n, m -> (2, n, m - n) | _, _, _ -> raise f)
-    |> add 'F' (fun v ->
-        match v with 2, n, m -> (1, n, m) | _, _, _ -> raise f)
-    |> add '_' (fun v -> v))
+    |> add 'A' (Arity1 (fun n -> Two (1, n)))
+    |> add 'B' (Arity2 (fun (a, n) -> Two (a * n, n - 1)))
+    |> add 'C' (Arity2 (fun (a, _) -> One a))
+    |> add 'D' (Arity2 (fun (n, m) -> Two (n - m, m)))
+    |> add 'E' (Arity2 (fun (n, m) -> Two (n, m - n)))
+    |> add 'F' (Arity2 (fun (n, _) -> One n))
+    |> add '_' Id)
 
 let doms =
   CharMap.(
     empty
-    |> add 'A' (fun v -> match v with 1, _, _ -> true | _, _, _ -> false)
-    |> add 'B' (fun v -> match v with 2, _, _ -> true | _, _, _ -> false)
-    |> add 'C' (fun v -> match v with 2, _, 0 -> true | _, _, _ -> false)
-    |> add 'D' (fun v -> match v with 2, n, m -> n >= m | _, _, _ -> false)
-    |> add 'E' (fun v -> match v with 2, n, m -> m >= n | _, _, _ -> false)
-    |> add 'F' (fun v -> match v with 2, n, m -> n = m | _, _, _ -> false)
-    |> add '$' (fun v -> match v with 0, 1, 2 -> true | _, _, _ -> false)
-      (*TC?*)
-    |> add '_' (fun _ -> true))
+    |> add 'A' (Arity1 (fun _ -> true))
+    |> add 'B' (Arity2 (fun (_, _) -> true))
+    |> add 'C' (Arity2 (fun (_, n) -> n = 0))
+    |> add 'D' (Arity2 (fun (n, m) -> n >= m))
+    |> add 'E' (Arity2 (fun (n, m) -> m >= n))
+    |> add 'F' (Arity2 (fun (n, m) -> n = m))
+    |> add '_' Id)
 
 let pris =
   CharMap.(
@@ -72,15 +69,32 @@ let sactv s =
   in
   List.sort scmp (actv s)
 
+let funcall f s =
+  match (f, s) with
+  | Id, _ -> s
+  | Arity1 f1, One s1 -> f1 s1
+  | Arity2 f2, Two s2 -> f2 s2
+  | _, _ -> raise (Failure "fail")
+
+let prdcall f s =
+  match (f, s) with
+  | Id, _ -> true
+  | Arity1 f1, One s1 -> f1 s1
+  | Arity2 f2, Two s2 -> f2 s2
+  | _, _ -> false
+
 let rec runx r s =
-  match r with Eps -> ( match s with _, n, _ -> n) | _ -> dalts s (sactv r)
+  match r with
+  | Eps -> ( match s with One n -> n | _ -> raise f)
+  | _ -> dalts s (sactv r)
 
 and dalts s zs =
   match zs with
   | [] -> raise (Failure "not exhaustive")
   | (i, k) :: zs2 ->
-      if (CharMap.find i doms) s then runx k ((CharMap.find i imps) s)
+      if prdcall (CharMap.find i doms) s then
+        runx k (funcall (CharMap.find i imps) s)
       else dalts s zs2
 
-let run s n = runx s (1, n, 0)
-let run2 s n m = runx s (2, n, m)
+let run s n = runx s (One n)
+let run2 s n m = runx s (Two (n, m))
