@@ -1,10 +1,21 @@
 type re = Eps | Imp of char | Alt of re * re | Seq of re * re | Rep of re
 
-let seq x y = match (x, y) with Eps, _ -> y | _, Eps -> x | _, _ -> Seq (x, y)
+let rec string_of_re s : string =
+  match s with
+  | Eps -> "$"
+  | Imp f -> Char.escaped f
+  | Rep x -> "Rep(" ^ string_of_re x ^ ")"
+  | Alt (x, y) -> "Alt(" ^ string_of_re x ^ "|" ^ string_of_re y ^ ")"
+  | Seq (x, y) -> "Seq(" ^ string_of_re x ^ ";" ^ string_of_re y ^ ")"
+
+(*************************************************************************)
 
 type branch = char * re
 
 let rec actv s : branch list =
+  let seq x y =
+    match (x, y) with Eps, _ -> y | _, Eps -> x | _, _ -> Seq (x, y)
+  in
   match s with
   | Eps -> [ ('_', Eps) ]
   | Imp f -> [ (f, Eps) ]
@@ -20,13 +31,7 @@ let rec actv s : branch list =
       let xs = List.map (fun v -> match v with i, k -> (i, seq k y)) zs in
       if List.mem ('_', Eps) zs then List.flatten [ xs; actv y ] else xs
 
-let rec string_of_re s : string =
-  match s with
-  | Eps -> "$"
-  | Imp f -> Char.escaped f
-  | Rep x -> "Rep(" ^ string_of_re x ^ ")"
-  | Alt (x, y) -> "Alt(" ^ string_of_re x ^ "|" ^ string_of_re y ^ ")"
-  | Seq (x, y) -> "Seq(" ^ string_of_re x ^ ";" ^ string_of_re y ^ ")"
+(*************************************************************************)
 
 module CharMap = Map.Make (Char)
 
@@ -75,10 +80,12 @@ let pribasis : StringSet.t CharMap.t =
 let pris : int CharMap.t =
   let calcpri s =
     CharMap.bindings pribasis
-      |> List.map (fun (_,v) -> Bool.to_int (StringSet.subset s v))
-      |> List.fold_left (+) 0
+    |> List.map (fun (_, v) -> Bool.to_int (StringSet.subset s v))
+    |> List.fold_left ( + ) 0
   in
   CharMap.map calcpri pribasis
+
+(*************************************************************************)
 
 let sactv s : branch list =
   let scmp x y =
@@ -99,6 +106,8 @@ let prdcall f s : bool =
   | Arity1 f1, One s1 -> f1 s1
   | Arity2 f2, Two s2 -> f2 s2
   | _, _ -> false
+
+(*  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *)
 
 let rec runx r s : int =
   match r with
