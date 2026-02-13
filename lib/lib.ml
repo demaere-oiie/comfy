@@ -59,15 +59,30 @@ let doms : pd CharMap.t =
     |> add 'F' (Arity2 (fun (n, m) -> n = m))
     |> add '_' Id)
 
-let pris : int CharMap.t =
+module StringSet = Set.Make (String)
+
+let pribasis : StringSet.t CharMap.t =
   CharMap.(
-    empty |> add 'A' 0 |> add 'B' 1 |> add 'C' 0 |> add 'D' 1 |> add 'E' 1
-    |> add 'F' 0 |> add '_' 6)
+    empty
+    |> add 'A' @@ StringSet.of_list []
+    |> add 'B' @@ StringSet.of_list [ "0<=n" ]
+    |> add 'C' @@ StringSet.of_list [ "0<=n"; "n<=0" ]
+    |> add 'D' @@ StringSet.of_list [ "m<=n" ]
+    |> add 'E' @@ StringSet.of_list [ "n<=m" ]
+    |> add 'F' @@ StringSet.of_list [ "m<=n"; "n<=m" ]
+    |> add '_' @@ StringSet.of_list [])
+
+let pris : int CharMap.t =
+  let calcpri s =
+    CharMap.bindings pribasis
+      |> List.map (fun (_,v) -> Bool.to_int (StringSet.subset s v))
+      |> List.fold_left (+) 0
+  in
+  CharMap.map calcpri pribasis
 
 let sactv s : branch list =
   let scmp x y =
-    match x with
-    | i, _ -> ( match y with j, _ -> CharMap.(find i pris - find j pris))
+    match (x, y) with (i, _), (j, _) -> CharMap.(find i pris - find j pris)
   in
   List.sort scmp (actv s)
 
