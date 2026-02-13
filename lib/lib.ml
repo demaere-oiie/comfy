@@ -37,7 +37,7 @@ type 'a arity = Id | Arity1 of (int -> 'a) | Arity2 of (int * int -> 'a)
 type fn = possibly_many arity
 type pd = bool arity
 
-let imps =
+let imps : fn CharMap.t =
   CharMap.(
     empty
     |> add 'A' (Arity1 (fun n -> Two (1, n)))
@@ -48,7 +48,7 @@ let imps =
     |> add 'F' (Arity2 (fun (n, _) -> One n))
     |> add '_' Id)
 
-let doms =
+let doms : pd CharMap.t =
   CharMap.(
     empty
     |> add 'A' (Arity1 (fun _ -> true))
@@ -59,7 +59,7 @@ let doms =
     |> add 'F' (Arity2 (fun (n, m) -> n = m))
     |> add '_' Id)
 
-let pris =
+let pris : int CharMap.t =
   CharMap.(
     empty |> add 'A' 0 |> add 'B' 1 |> add 'C' 0 |> add 'D' 1 |> add 'E' 1
     |> add 'F' 0 |> add '_' 6)

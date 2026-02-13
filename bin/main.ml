@@ -4,6 +4,8 @@ let fac = Seq (Imp 'A', Seq (Rep (Imp 'B'), Imp 'C'))
 let gcd = Seq (Rep (Alt (Imp 'D', Imp 'E')), Imp 'F')
 let fac2 = Seq (Imp 'A', Rep (Alt (Imp 'B', Imp 'C')))
 let gcd2 = Rep (Alt (Imp 'D', Alt (Imp 'E', Imp 'F')))
+let fac3 = Seq (Imp 'A', Rep (Alt (Imp 'C', Imp 'B')))
+let gcd3 = Rep (Alt (Imp 'F', Alt (Imp 'E', Imp 'D')))
 
 let () =
   let doit nm re nma arg =
@@ -13,5 +15,7 @@ let () =
   in
   doit "fac" fac "fac 7" (run fac 7);
   doit "fac" fac2 "fac 7" (run fac2 7);
+  doit "fac" fac3 "fac 7" (run fac3 7);
   doit "gcd" gcd "gcd 30 42" (run2 gcd 30 42);
-  doit "gcd" gcd2 "gcd 30 42" (run2 gcd2 30 42)
+  doit "gcd" gcd2 "gcd 30 42" (run2 gcd2 30 42);
+  doit "gcd" gcd3 "gcd 30 42" (run2 gcd3 30 42)
